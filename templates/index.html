@@ -48,6 +48,14 @@
     border: 1px solid #444;
   }
 
+.player-buttons {
+  position: sticky;
+  bottom: 0;
+  background-color: #111; /* Match theme */
+  padding: 10px;
+}
+
+
   select.form-select {
     background-color: #333;
     color: #fff;
@@ -78,7 +86,7 @@
            </select>
         </form>
 
-      <h6>Songs in "{{ genre }}"</h6>
+<!--      <h6>Songs in "{{ genre }}"</h6>-->
       <ul class="list-unstyled">
         {% for song in songs %}
         {% set name = song.rsplit('.', 1)[0] %}
@@ -91,23 +99,17 @@
       </ul>
     </div>
 <!-- Column 2: Video and Queue -->
-    <div class="col-3 video-section">
+    <div class="col-4 video-section">
 <!-- ##### VIDEO SCREEN #### -->
       <video id="video-player" controls width="100%">
         <source id="video-source" src="" type="video/mp4">
            Your browser does not support the video tag.
       </video>
 
- <!-- #### PLAYER BUTTONS #### -->
-       <div class="mt-3 text-center">
-            <button class="btn btn-success btn-sm" onclick="playSong('{{ genre }}', '{{ current_song[:-4] if current_song }}')">▶ Play / ❚❚ Pause</button>
-            <button class="btn btn-success btn-sm" onclick="stopPlayback()">⏹ Stop</button>
-            <button class="btn btn-warning btn-sm" onclick="restartVideo()">🔁 Start Over</button>
-       </div>
-
 <!-- #### QUEUE #### -->
        <div class="queue mt-3">
-         <h6>Queue</h6>
+         <!--<h6>Queue</h6>-->
+        <div class="queue overflow-auto" style="flex-grow: 1; max-height: 200px;">
          <ul class="list-unstyled">
            {% for q in queue %}
              <li class="text-white song-link" style="font-size: 0.85rem;" onclick='removeFromQueue({{ q|tojson }})'>
@@ -115,10 +117,22 @@
              </li>
            {% endfor %}
          </ul>
-      </div>
+        </div>
+<!--      -->
 
-<!-- Columns 3 & 4: Song Sheet -->
-      <div class="col-6 sheet-section">
+ <!-- #### PLAYER BUTTONS #### -->
+       <div class="mt-2 text-center border-top pt-2">
+           <button class="btn btn-warning btn-sm" onclick="PreviousVideo()">Previous</button>
+            <button class="btn btn-success btn-sm" onclick="playSong('{{ genre }}', '{{ current_song[:-4] if current_song }}')">▶ Play / ❚❚ Pause</button>
+            <button class="btn btn-success btn-sm" onclick="stopPlayback()">⏹ Stop</button>
+            <button class="btn btn-warning btn-sm" onclick="restartVideo()">🔁 Start Over</button>
+           <button class="btn btn-warning btn-sm" onclick="nextVideo()">Next</button>
+           <button class="btn btn-danger btn-sm mt-2" onclick="clearQueue()">🧹 Clear Queue</button>
+        </div>
+       </div>
+      </div>
+<!-- Columns 3: Song Sheet -->
+      <div class="col-5 sheet-section">
         <h6>Song Sheet</h6>
         <img src="{{ url_for('static', filename='Chill/song.png') }}" id="sheet-display" alt="Song Sheet">
         <!-- For PDF embed: <embed src="/static/november_rain.pdf" type="application/pdf" width="100%" height="700px" />-->
@@ -130,6 +144,27 @@
 document.addEventListener("DOMContentLoaded", function () {
   const player = document.querySelector("video");
   console.log("Script loaded");
+
+window.playSong = function (genre, filename) {
+    fetch("/get-next-song", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ genre: genre, filename: filename }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.video && data.sheet) {
+          const video = document.getElementById("video-player");
+          const source = document.getElementById("video-source");
+          source.src = data.video;
+          video.load(); // reload video source
+          video.play(); // optionally auto-play
+          document.getElementById("sheet-display").src = data.sheet;
+          console.log("playSong called with:", genre, filename);
+        }
+      });
+  };
+});
 
   window.togglePlayPause = function () {
     if (player.paused) {
@@ -148,6 +183,12 @@ document.addEventListener("DOMContentLoaded", function () {
     player.currentTime = 0;
     player.play();
   };
+
+  window.clearQueue = function clearQueue() {
+  fetch('/clear_queue', { method: 'POST' })
+    .then(() => location.reload());
+    console.log('Clearing Queue')
+}
 
   window.addToQueue = function (genre, filename) {
   console.log("Adding to queue:", genre, filename);
@@ -182,26 +223,10 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("removeFromQueue called with:", filename);
   };
 
-  window.playSong = function (genre, filename) {
-    fetch("/get-next-song", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ genre: genre, filename: filename }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.video && data.sheet) {
-          const video = document.getElementById("video-player");
-          const source = document.getElementById("video-source");
-          source.src = data.video;
-          video.load(); // reload video source
-          video.play(); // optionally auto-play
-          document.getElementById("sheet-display").src = data.sheet;
-          console.log("playSong called with:", genre, filename);
-        }
-      });
-  };
-});
+
+
+
+
 </script>
 
 

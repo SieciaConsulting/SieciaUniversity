@@ -44,6 +44,7 @@ def add_to_queue():
     filename = data.get("filename")
     session.setdefault("queue", [])
     session.setdefault("played", [])
+
     if filename not in session["queue"]:
         session["queue"].append(filename)
     if filename not in session["played"]:
@@ -81,6 +82,17 @@ def get_next_song():
         'video': url_for('static', filename=f"{genre}/{song_filename}.mp4"),
         'sheet': url_for('static', filename=f"{genre}/{song_filename}.png")
     })
+
+@app.route('/clear_queue', methods=['POST'])
+def clear_queue():
+    global queue, available_songs, current_song
+    available_songs += queue
+    queue = []
+    current_song = None
+    return ('', 204)
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
