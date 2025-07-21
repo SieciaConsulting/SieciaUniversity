@@ -1,0 +1,24 @@
+# Ignore MP3/video/media content
+static/**/*.mp3
+static/**/*.mp4
+static/**/*.wav
+static/**/*.ogg
+static/**/*.flac
+static/**/*.avi
+
+# If you want to exclude entire subfolders (like genres):
+static/Chill/
+static/Heavy/
+static/Christian/
+static/Classical/
+
+# Optional: exclude queue or log files
+*.log
+*.tmp
+
+# Python & IDE artifacts
+__pycache__/
+*.pyc
+.idea/
+.env
+.venv/
