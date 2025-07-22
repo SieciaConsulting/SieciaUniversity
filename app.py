@@ -1,105 +1,61 @@
+import sqlite3
+
 from flask import Flask, render_template, request, session, jsonify, send_from_directory, request, url_for
+from models import db
+from db import init_db, scan_and_populate
+
 import os
+
+# Initialize the database
+init_db()
+scan_and_populate("static")
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"  # Required for session
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///songs.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MUSIC_ROOT = os.path.join("static")
 
-# @app.route('/')
-# def index():
-#     global queue, available_songs, current_song
-#     if queue:
-#         current_song = queue[0]
-#     else:
-#         current_song = None  # No song in queue
-#     # return render_template('index.html',
-#     #                        available_songs=available_songs,
-#     #                        queue=queue,
-#     #                        current_song=current_song)
-#
-#     genre = request.args.get("genre", "Chill")
-#     genres = [d for d in os.listdir(MUSIC_ROOT) if os.path.isdir(os.path.join(MUSIC_ROOT, d))]
-#
-#     genre_path = os.path.join(MUSIC_ROOT, genre)
-#     try:
-#         songs = [f for f in os.listdir(genre_path) if f.endswith((".mp3", ".mp4"))]
-#     except FileNotFoundError:
-#         songs = []
-#
-#     # Init session variables
-#     if "played" not in session:
-#         session["played"] = []
-#     if "queue" not in session:
-#         session["queue"] = []
-#
-#     # Filter out played songs
-#     played = session["played"]
-#     songs = [s for s in songs if s not in played]
-#
-#     current_song = songs[0] if songs else None
-#     queue = session["queue"] or []
-#
-#
-#     return render_template("index.html",
-#                            genre=genre,
-#                            genres=genres,
-#                            songs=songs,
-#                            queue=queue,
-#                            current_song=songs[0] if songs else None)
+db.init_app(app)
+# Create tables once
+with app.app_context():
+    db.create_all()
+
 @app.route('/')
 def index():
-    genre = request.args.get("genre", "Chill")
-    genres = [d for d in os.listdir(MUSIC_ROOT) if os.path.isdir(os.path.join(MUSIC_ROOT, d))]
+    conn = sqlite3.connect("songs.db")
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM songs ORDER BY title ASC')
+    rows = c.fetchall()
+    conn.close()
 
-    genre_path = os.path.join(MUSIC_ROOT, genre)
-    try:
-        songs = [f for f in os.listdir(genre_path) if f.endswith((".mp3", ".mp4"))]
-    except FileNotFoundError:
-        songs = []
+    selected_genre = request.args.get("genre", "")  # or None
 
-    # Init session variables
-    session.setdefault("played", [])
-    session.setdefault("queue", [])
+    if selected_genre:
+        songs = [s for s in get_songs if s.get("genre") == selected_genre]
+    else:
+        songs = get_songs
 
-    # Filter out played songs
-    played = session["played"]
-    songs = [s for s in songs if s not in played]
+    songs = get_all_songs(selected_genre)
+    genres = sorted(set(song['genre'] for song in songs if song['genre']))
 
-    queue = session["queue"]
-    current_song = queue[0] if queue else (songs[0] if songs else None)
-    session['current_song'] = current_song
-
-    # Debug output
-    print("=== index() called ===")
-    print("Genre:", genre)
-    print("Session queue:", queue)
-    print("Session played:", played)
-    print("Available songs:", songs)
-    print("Resolved current_song:", current_song)
-    print("======================")
-
-    return render_template("index.html",
-                           genre=genre,
-                           genres=genres,
-                           songs=songs,
-                           queue=queue,
-                           current_song=current_song)
+    return render_template("index.html", songs=songs, queue=[], genres=genres, genre=selected_genre)
 
 
-@app.route("/add-to-queue", methods=["POST"])
+@app.route('/add-to-queue', methods=['POST'])
 def add_to_queue():
-    data = request.json
-    genre = data.get("genre")
-    filename = data.get("filename")
-    session.setdefault("queue", [])
-    session.setdefault("played", [])
 
-    if filename not in session["queue"]:
-        session["queue"].append(filename)
-    if filename not in session["played"]:
-        session["played"].append(filename)
-    session.modified = True
-    return jsonify(success=True)
+    data = request.get_json()
+    genre = data['genre']
+    filename = data['filename']
+    was_empty = len(session.get('queue', [])) == 0
+
+    # session['genre'] = genre
+    # session['queue'].append(filename)
+    # session.modified = True
+    return jsonify(success=True, was_empty=was_empty)
+
 
 @app.route("/remove_from_queue", methods=["POST"])
 def remove_from_queue():
@@ -128,9 +84,28 @@ def get_next_song():
         return jsonify({'error': 'Missing genre or filename'}), 400
 
     return jsonify({
-        'video': url_for('static', filename=f"{genre}/{song_filename}.mp4"),
+        'video': url_for('static', filename=f"{session['genre']}/{song_filename}.mp4"),
         'sheet': url_for('static', filename=f"{genre}/{song_filename}.png")
     })
+
+@app.route('/songs')
+def get_songs():
+    conn = sqlite3.connect("songs.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM songs")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify(rows)
+
+def get_all_songs(genre): # <-- updated to pass in genre
+    conn = sqlite3.connect("songs.db")
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM songs ORDER BY title")
+    songs = c.fetchall()
+    conn.close()
+    return songs
+
 
 @app.route('/clear_queue', methods=['POST'])
 def clear_queue():
