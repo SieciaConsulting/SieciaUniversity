@@ -59,7 +59,7 @@ def index(): #The index route should only show current state, not change it. -Re
     )
 
 
-@app.route('/add-to-queue', methods=['POST'])
+@app.route('/add_to_queue', methods=['POST'])
 def add_to_queue():
     data = request.get_json()
     genre = data['genre']

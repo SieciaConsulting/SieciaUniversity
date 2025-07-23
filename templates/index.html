@@ -24,25 +24,28 @@
        </form>
 
 <!-- available_songs_list -->
-      <ul class="list-unstyled">
-          {% for song in songs %}
-          {% set base_filename = song.filename.rsplit('/', 1)[-1] %}
-          {% set clean_name = base_filename.rsplit('.', 1)[0] %}
-        <li class="song-link text-white no-wrap" id="{{ song.genre }}/{{ base_filename }}" style="cursor: pointer;"
-          onclick="addToQueue('{{ song.genre }}', '{{ base_filename }}')">
-          {{ clean_name }}
-        </li>
-         {% else %}
-         <li class="text-muted">No songs found.</li>
-        {% endfor %}
-      </ul>
+<ul class="list-unstyled">
+  {% for song in songs %}
+    {% set base_filename = song.filename.rsplit('/', 1)[-1] %}
+    {% set clean_name = base_filename.rsplit('.', 1)[0] %}
+    <li class="mb-1">
+      <a href="#" class="text-decoration-none text-white d-inline-block"
+         onclick='addToQueue({{ song.genre|tojson }}, {{ base_filename|tojson }}); return false;'>
+        ➕ {{ clean_name }}
+      </a>
+    </li>
+  {% else %}
+    <li class="text-muted">No songs found.</li>
+  {% endfor %}
+</ul>
+
      </div><!--Close column1-->
 
 <!-- Column 2: Video and Queue -->
      <div class="col-4 video-section">
 
 <!-- ##### VIDEO SCREEN #### -->
-     <video id="video-player" controls width="100%">
+     <video id="player" controls width="100%">
         <source id="video-source" src="" type="video/mp4">
            Your browser does not support the video tag.
       </video>
@@ -51,8 +54,8 @@
         <div class="queue mt-3 overflow-auto" style="flex-grow: 1; max-height: 200px;">
          <ul id="queue-list" class="list-unstyled">
            {% for q in queue %}
-           <li class="text-white song-link" style="font-size: 0.85rem;" onclick='removeFromQueue({{ q|tojson }})'>
-             {{ q.title }}
+           <li class="text-white song-link" style="font-size: 0.85rem;" onclick="removeFromQueue(${JSON.stringify(genre)}, ${JSON.stringify(filename)})">
+             {{ q.filename.rsplit('.', 1)[0] }}
            </li>
             {% endfor %}
           </ul>
@@ -61,7 +64,7 @@
  <!-- #### PLAYER BUTTONS #### -->
       <div class="mt-2 text-center border-top pt-2" id="media_controls">
            <button class="btn btn-warning btn-sm" onclick="previousSong()">Previous</button>
-           <button onclick="player.play()">▶ Play</button>
+           <button class="btn btn-success btn-sm" onclick="playSong()">▶ Play</button>
            <button class="btn btn-success btn-sm" onclick="stopPlayback()">⏹ Stop</button>
            <button class="btn btn-warning btn-sm" onclick="restartSong()">🔁 Start Over</button>
            <button class="btn btn-warning btn-sm" onclick="nextSong()">Next</button>
