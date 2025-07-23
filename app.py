@@ -78,8 +78,6 @@ def add_to_queue():
     if was_empty:
         session['current_song'] = {'genre': genre, 'filename': filename}
 
-
-
     session.modified = True
     log_session_state("add_to_queue() call")
     return jsonify(success=True, was_empty=was_empty)

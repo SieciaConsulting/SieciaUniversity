@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     console.warn("Songs variable not found!");
   }
 
-
 window.addToQueue = function addToQueue(genre, filename) {
   console.log("script.js > addToQueue: genre:", genre, " filename:", filename);
 
@@ -29,7 +28,7 @@ window.addToQueue = function addToQueue(genre, filename) {
   .then(data => {
     console.log("Added to queue:", data);
 
-    // ✅ Append song to queue UI
+    // ✅ Append song to queue UI *NOT WORKING
     const queueDiv = document.getElementById("queue");
     if (queueDiv) {
       const songDiv = document.createElement("div");
@@ -41,14 +40,16 @@ window.addToQueue = function addToQueue(genre, filename) {
       queueDiv.appendChild(songDiv);
     }
 
-    // ✅ Remove song from ASL UI
+    // ✅ Remove song from ASL UI *NOT WORKING
     const songId = `${genre}_${filename}`.replace(/[^\w\-]/g, '_');
     const aslLi = document.getElementById(songId);
+    console.log("Removing from ASL. songId: ", songId, " aslLi:", aslLi);
+     // Removing from ASL. songId:  Chill_Through_Glass_-_Stone_Sour_mp4  aslLi: null
     if (aslLi && aslLi.parentNode) {
       aslLi.parentNode.removeChild(aslLi);
     }
 
-    // ✅ Set video/sheet
+    // ✅ Set video/sheet * WORKING
     const videoPath = `/static/${genre}/${filename}`;
     const sheetPath = videoPath.replace('.mp4', '.png');
 

@@ -26,6 +26,13 @@
     color: #fff;
   }
 
+#player {
+  width: 640px; /* Or your desired fixed width */
+  height: 360px; /* Or your desired fixed height */
+  object-fit: cover; /* This is key for content scaling */
+  display: block; /* Removes extra space below if any */
+}
+
   .video-section {
     background-color: #111;
     padding: 10px;

@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b403a977-3c2d-4d88-9500-9c0ae15a08c5" name="Changes" comment="close">
+    <list default="true" id="b403a977-3c2d-4d88-9500-9c0ae15a08c5" name="Changes" comment="Clicking a song pulls up correct video and sheet. Q broken.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/script.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/style.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -109,7 +110,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753244526428</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Clicking a song pulls up correct video and sheet. Q broken.">
+      <option name="closed" value="true" />
+      <created>1753301602550</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1753301602550</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -118,6 +127,7 @@
     <MESSAGE value="working" />
     <MESSAGE value="workinggit" />
     <MESSAGE value="close" />
-    <option name="LAST_COMMIT_MESSAGE" value="close" />
+    <MESSAGE value="Clicking a song pulls up correct video and sheet. Q broken." />
+    <option name="LAST_COMMIT_MESSAGE" value="Clicking a song pulls up correct video and sheet. Q broken." />
   </component>
 </project>
