@@ -8,75 +8,39 @@ document.addEventListener("DOMContentLoaded", function () {
     console.warn("Songs variable not found!");
   }
 
-window.addToQueue = function addToQueue(genre, filename) {
-  console.log("script.js > addToQueue: genre:", genre, " filename:", filename);
+window.addToQueue = function(songId) {
+    const currentGenre = document.getElementById("genre-select")?.value || "";
 
-  if (!genre || !filename) {
-    alert("Missing genre or filename!");
-    return;
-  }
-   console.log("body: ", JSON.stringify({ genre, filename }));
-
-//debugger;
-  fetch('/add_to_queue', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ genre, filename })
-
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log("Added to queue:", data);
-
-    // ✅ Append song to queue UI *NOT WORKING
-    const queueDiv = document.getElementById("queue");
-    if (queueDiv) {
-      const songDiv = document.createElement("div");
-      songDiv.className = "mb-1";
-      songDiv.innerHTML = `
-        ${filename}
-        <button class="btn btn-danger btn-sm ms-2" onclick="removeFromQueue('${genre}', '${filename}')">🗑</button>
-      `;
-      queueDiv.appendChild(songDiv);
-    }
-
-    // ✅ Remove song from ASL UI *NOT WORKING
-    const songId = `${genre}_${filename}`.replace(/[^\w\-]/g, '_');
-    const aslLi = document.getElementById(songId);
-    console.log("Removing from ASL. songId: ", songId, " aslLi:", aslLi);
-     // Removing from ASL. songId:  Chill_Through_Glass_-_Stone_Sour_mp4  aslLi: null
-    if (aslLi && aslLi.parentNode) {
-      aslLi.parentNode.removeChild(aslLi);
-    }
-
-    // ✅ Set video/sheet * WORKING
-    const videoPath = `/static/${genre}/${filename}`;
-    const sheetPath = videoPath.replace('.mp4', '.png');
-
-    const player = document.getElementById("player");
-    const source = document.getElementById("video-source");
-    const sheet = document.getElementById("sheet-display");
-
-    if (player && source) {
-      source.src = videoPath;
-      player.load();
-    }
-
-    if (sheet) {
-      sheet.src = sheetPath;
-    }
-  })
-  .catch(error => {
-    console.error('Error adding to queue:', error);
-  });
+    fetch(`/add_to_queue?song_id=${songId}&genre=${encodeURIComponent(currentGenre)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.queue_html) {
+                document.getElementById('queue').innerHTML = data.queue_html;
+            }
+            if (data.songs_html) {
+                document.getElementById('asl').innerHTML = data.songs_html;
+            }
+        });
 };
 
-// 🔥 Future drone/metronome calls:
-        // const musicKey = data.key;
-        // const bpm = data.bpm;
-        // dronePlayer.src = `/static/drones/${musicKey}.mp4`;
-        // dronePlayer.play();
-        // metronome.BPM(bpm);
+
+window.onload = function () {
+  fetch('/get_session_state')
+    .then(res => {
+      if (!res.ok) throw new Error('Network response was not ok');
+      return res.json();
+    })
+    .then(data => {
+      document.getElementById('queue').innerHTML = data.queue_html;
+      if (data.current_song) {
+        setMedia(data.current_song.filename);
+        setSheet(data.current_song.sheet_url);
+      }
+    })
+    .catch(err => {
+      console.error('Error loading session state:', err);
+    });
+};
 
 
 window.playSong = function () {
@@ -202,15 +166,3 @@ window.nextSong = function () {
 });
 
 
-//window.onload = function() {
-//      console.log("script.js > window.onload: genre:", genre, " filename:", filename);
-//      const genre = {{ genre|tojson }};
-//      const filename = {{ filename|tojson }};
-//      const videoPath = `/static/${genre}/${filename}`;
-//      const sheetPath = `/static/${genre}/${filename.replace(".mp4", ".png")}`;
-//
-//      const source = document.getElementById("video-source");
-//      source.src = videoPath;
-//      player.load();
-//      document.getElementById("sheet-display").src = sheetPath;
-//};

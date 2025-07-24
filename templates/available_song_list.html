@@ -1,0 +1,14 @@
+<ul class="list-group">
+  {% for song in songs %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      {{ song.title }} - {{ song.artist }} - {{ song.id }}
+      <button class="btn btn-sm btn-primary"
+        onclick="addToQueue({{ song.id }})">
+  Add
+</button>
+
+    </li>
+  {% else %}
+    <li class="list-group-item text-muted">No songs available</li>
+  {% endfor %}
+</ul>

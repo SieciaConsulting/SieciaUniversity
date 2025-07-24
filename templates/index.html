@@ -24,20 +24,11 @@
        </form>
 
 <!-- available_songs_list -->
-<ul class="list-unstyled">
-  {% for song in songs %}
-    {% set base_filename = song.filename.rsplit('/', 1)[-1] %}
-    {% set clean_name = base_filename.rsplit('.', 1)[0] %}
-    <li class="mb-1">
-      <a href="#" class="text-decoration-none text-white d-inline-block"
-         onclick='addToQueue({{ song.genre|tojson }}, {{ base_filename|tojson }}); return false;'>
-        {{ clean_name }}
-      </a>
-    </li>
-  {% else %}
-    <li class="text-muted">No songs found.</li>
-  {% endfor %}
-</ul>
+<div id="asl">
+  {% include 'available_song_list.html' %}
+</div>
+
+
 
      </div><!--Close column1-->
 
@@ -51,15 +42,10 @@
       </video>
 
 <!-- #### QUEUE #### -->
-        <div class="queue mt-3 overflow-auto" style="flex-grow: 1; max-height: 200px;">
-         <ul id="queue-list" class="list-unstyled">
-           {% for q in queue %}
-           <li class="text-white song-link" style="font-size: 0.85rem;" onclick="removeFromQueue(${JSON.stringify(genre)}, ${JSON.stringify(filename)})">
-             {{ q.filename.rsplit('.', 1)[0] }}
-           </li>
-            {% endfor %}
-          </ul>
-     </div>
+      <div id="queue" class="p-2 bg-dark text-white">
+          {% include 'queue.html' %}
+      </div>
+
 
  <!-- #### PLAYER BUTTONS #### -->
       <div class="mt-2 text-center border-top pt-2" id="media_controls">
@@ -70,6 +56,11 @@
            <button class="btn btn-warning btn-sm" onclick="nextSong()">Next</button>
            <button class="btn btn-secondary btn-sm mt-2" onclick="window.open('/debug', '_blank')">⚙️</button>
       </div>
+
+<!--    asljson     -->
+<pre class="text-muted small">
+  {{ songs | tojson(indent=2) }}
+</pre>
 
 </div> <!--Close column2-->
 

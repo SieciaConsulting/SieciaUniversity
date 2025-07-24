@@ -14,6 +14,19 @@
     white-space:no-wrap;
   }
 
+.list-group-item {
+  background-color: black;
+  color: white; /* Make all text within the list item white */
+  border-color: #333; /* A slightly lighter black for the border, if you want one */
+}
+
+/* You still want to make sure the button itself looks good on this background */
+.list-group-item .btn-primary {
+  background-color: grey; /* Or a light gray, or keep it black with white text */
+  border-color: white;
+  color: black; /* Text on the button should be black if its background is white */
+}
+
   .song-link {
     text-decoration: none;
     color: #ccc;

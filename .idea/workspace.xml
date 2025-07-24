@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b403a977-3c2d-4d88-9500-9c0ae15a08c5" name="Changes" comment="Clicking a song pulls up correct video and sheet. Q broken.">
+    <list default="true" id="b403a977-3c2d-4d88-9500-9c0ae15a08c5" name="Changes" comment="puter restart">
+      <change afterPath="$PROJECT_DIR$/songs.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/available_song_list.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/queue.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/script.js" afterDir="false" />
@@ -50,8 +53,8 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/static" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/static" />
       <recent name="$PROJECT_DIR$/templates" />
     </key>
   </component>
@@ -118,7 +121,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753301602550</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="puter restart">
+      <option name="closed" value="true" />
+      <created>1753313354171</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1753313354171</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -128,6 +139,7 @@
     <MESSAGE value="workinggit" />
     <MESSAGE value="close" />
     <MESSAGE value="Clicking a song pulls up correct video and sheet. Q broken." />
-    <option name="LAST_COMMIT_MESSAGE" value="Clicking a song pulls up correct video and sheet. Q broken." />
+    <MESSAGE value="puter restart" />
+    <option name="LAST_COMMIT_MESSAGE" value="puter restart" />
   </component>
 </project>
