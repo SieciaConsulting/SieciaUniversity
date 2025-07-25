@@ -1,4 +1,4 @@
-# Ignore MP3/video/media content
+# Ignore all media inside genre folders
 static/**/*.mp3
 static/**/*.mp4
 static/**/*.wav
@@ -6,15 +6,16 @@ static/**/*.ogg
 static/**/*.flac
 static/**/*.avi
 
-# If you want to exclude entire subfolders (like genres):
+# Ignore genre subfolders
 static/Chill/
 static/Heavy/
 static/Christian/
 static/Classical/
 
-# Optional: exclude queue or log files
-*.log
-*.tmp
+# ALLOW static/script.js and static/style.css
+!static/script.js
+!static/style.css
+
 
 # Python & IDE artifacts
 __pycache__/
