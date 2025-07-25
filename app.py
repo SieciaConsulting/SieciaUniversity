@@ -1,5 +1,3 @@
-import sqlite3
-
 from flask import Flask, render_template, request, session, jsonify, send_from_directory, request, url_for
 from models import db
 from db import init_db, scan_and_populate
@@ -25,56 +23,104 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-@app.route('/')
-def index(): #The index route should only show current state, not change it. -Relay
+@app.route("/")
+def home():
+    genre = request.args.get("genre", "Chill")
+    exclude = {"Drone", "Extra"}
+    genres = [d for d in os.listdir(MUSIC_ROOT)
+              if os.path.isdir(os.path.join(MUSIC_ROOT, d)) and d not in exclude]
 
-    played = session.get('played', [])
-    queue = session.get('queue', [])
-    if queue:
-        current_song = session.get('current_song', None)
+    genre_path = os.path.join(MUSIC_ROOT, genre)
+    try:
+        songs = [f for f in os.listdir(genre_path) if f.endswith((".mp3", ".mp4"))]
+    except FileNotFoundError:
+        songs = []
 
-    current_song = None
-    selected_genre = request.args.get("genre", "")
-    all_songs = get_all_songs()  # This should return all rows as dicts
-    queued_filenames = {q['filename'] for q in queue}
-    genres = sorted(set(song['genre'] for song in all_songs if song.get('genre'))) # <-- Genre dropdown items from song.genre
+    # Init session variables
+    if "played" not in session:
+        session["played"] = []
+    if "queue" not in session:
+        session["queue"] = []
 
-    # Filter songs for display
-    if selected_genre:
-        songs = [s for s in all_songs if s.get("genre") == selected_genre]
-    else:
-        songs = all_songs
+    # Filter out played songs
+    played = session["played"]
+    songs = [s for s in songs if s not in played]
 
-    songs = [s for s in songs if s['filename'].split('/')[-1] not in queued_filenames]
+    current_song = songs[0] if songs else None
+    queue = session["queue"] or []
 
-    log_session_state("index() call")
-    return render_template(
-        "index.html",
-        songs=songs,
-        queue=queue,
-        genres=genres,
-        genre=selected_genre,
-        current_song=current_song if queue else None
-    )
+    log_session_state("home/index()")
+    return render_template("index.html",
+                           genre=genre,
+                           genres=genres,
+                           songs=songs,
+                           queue=queue,
+                           current_song=songs[0] if songs else None)
 
+def get_all_songs():
+    db_path = os.path.join(os.path.dirname(__file__), "songs.db")
+    excluded_dirs = {"Drone", "Extras"}
 
-@app.route('/add_to_queue')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, title, artist, genre, filename FROM songs")
+    all_db_songs = cursor.fetchall()
+    conn.close()
+
+    songs = []
+
+    for song in all_db_songs:
+        filename = song["filename"]
+        genre = song["genre"]
+
+        if not filename:
+            continue
+
+        # Extract genre if missing
+        if not genre:
+            genre = filename.split('/')[0]
+
+        if genre in excluded_dirs:
+            continue
+
+        filepath = os.path.join("static", filename)
+        if os.path.exists(filepath):
+            songs.append({
+                "id": song["id"],
+                "title": song["title"],
+                "artist": song["artist"],
+                "genre": genre,
+                "filename": filename
+            })
+    songs.sort(key=lambda x: x["title"].lower())
+    log_session_state("get_all_songs() with inferred genres")
+    return songs
+
+@app.route('/add_to_queue', methods=['POST'])
 def add_to_queue():
-    song_id = request.args.get('song_id', type=int)
-    genre = request.args.get('genre', '')
+    data = request.get_json()
+    print("py > add_to_queue > Body:", data)
 
-    if not song_id:
-        return jsonify({'error': 'Missing song_id'}), 400
+    song_id = str(data.get("id"))  # Ensure it's a string
+    genre = data.get("genre")
 
     all_songs = get_all_songs()
-    song = next((s for s in all_songs if s['id'] == song_id), None)
+    song = next((s for s in all_songs if str(s.get('id')) == song_id), None)
 
     if not song:
         return jsonify({'error': 'Song not found'}), 404
 
-    queue = session.get('queue', [])
-    queue.append(song)
-    session['queue'] = queue
+    filename = song['filename']
+
+    queue = session.get("queue", [])
+    if not any(s['filename'] == filename for s in queue):
+        queue.append(song)
+
+    session["queue"] = queue
+
+    if not session.get("current_song"):
+        session["current_song"] = song
 
     # Remove queued songs from available songs
     queued_filenames = {s['filename'] for s in queue}
@@ -85,10 +131,21 @@ def add_to_queue():
 
     queue_html = render_template('queue.html', queue=queue)
     songs_html = render_template('available_song_list.html', songs=available_songs)
-    return jsonify({'queue_html': queue_html, 'songs_html': songs_html})
 
-
-
+    print(f"Selected genre: {genre}")
+    print(f"Queued filenames: {queue}")
+    # print(f"All songs: {[s['filename'] + ' | ' + str(s.get('genre')) for s in all_songs]}")
+    # print("Available songs after filtering:", available_songs)
+    print("Current Song:", session.get("current_song"))
+    return jsonify({
+    "queue_html": queue_html,
+    "songs_html": songs_html,
+    "queue_length": len(session["queue"]),
+    "current_song": {
+        "filename": song["filename"],
+        "sheet_url": url_for('static', filename=f'{song["filename"].replace(".mp4", ".png")}')
+    }
+})
 
 @app.route("/remove_from_queue", methods=["POST"])
 def remove_from_queue():
@@ -150,50 +207,6 @@ def get_songs():
     rows = c.fetchall()
     conn.close()
     return jsonify(rows)
-
-
-
-def get_all_songs():
-    db_path = os.path.join(os.path.dirname(__file__), "songs.db")
-    excluded_dirs = {"Drone", "Extras"}
-
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, title, artist, genre, filename FROM songs")
-    all_db_songs = cursor.fetchall()
-    conn.close()
-
-    songs = []
-
-    for song in all_db_songs:
-        filename = song["filename"]
-        genre = song["genre"]
-
-        if not filename:
-            continue
-
-        # Extract genre if missing
-        if not genre:
-            genre = filename.split('/')[0]
-
-        if genre in excluded_dirs:
-            continue
-
-        filepath = os.path.join("static", filename)
-        if os.path.exists(filepath):
-            songs.append({
-                "id": song["id"],
-                "title": song["title"],
-                "artist": song["artist"],
-                "genre": genre,
-                "filename": filename
-            })
-
-    log_session_state("get_all_songs() with inferred genres")
-    return songs
-
-
 
 
 @app.route('/clear_queue', methods=['POST'])
@@ -258,22 +271,49 @@ def show_played():
 
 @app.route('/get_session_state')
 def get_session_state():
-    queue = session.get('queue', [])
-    current_song = session.get('current_song')
+    genre = request.args.get("genre")
+    all_songs = get_all_songs()
+
+    # Rehydrate full song dicts if session only stored filenames
+    raw_queue = session.get("queue", [])
+    queue = []
+
+    for item in raw_queue:
+        if isinstance(item, dict):
+            queue.append(item)
+        elif isinstance(item, str):
+            song = next((s for s in all_songs if s["filename"] == item), None)
+            if song:
+                queue.append(song)
+
+    # Save upgraded queue back into session
+    session["queue"] = queue
+
+    queued_filenames = {s["filename"] for s in queue}
+    available_songs = [
+        s for s in all_songs
+        if s["filename"] not in queued_filenames and (not genre or s.get("genre") == genre)
+    ]
+
+    queue_html = render_template("queue.html", queue=queue)
+    songs_html = render_template("available_song_list.html", songs=available_songs)
+
+    current_song = session.get("current_song")
+
+    print("Genre filter:", genre)
+    print("Session Queue:", session.get("queue"))
 
     return jsonify({
-        "queue_html": render_template("queue.html", queue=queue),
-        "current_song": {
-            "filename": current_song['filename'],
-            "sheet_url": url_for('static', filename=f"{current_song['genre']}/{os.path.splitext(current_song['filename'])[0]}.png")
-        } if current_song else None
+        "queue_html": queue_html,
+        "songs_html": songs_html,
+        "current_song": current_song
     })
 
 
-
-def log_session_state(label="SESSION STATE"):
+def log_session_state(label="SESSION STATE", genre=None):
     logger.debug(f"\n--- {label} ---")
-    # logger.debug(f"Available: {session.get('available_songs')}")
+    #logger.debug(f"Available: {session.get('available_songs')}")
+    logger.debug(f"Genre: {genre}")
     logger.debug(f"Queue: {session.get('queue')}")
     logger.debug(f"Played: {session.get('played')}")
     logger.debug(f"Current Song: {session.get('current_song')}")

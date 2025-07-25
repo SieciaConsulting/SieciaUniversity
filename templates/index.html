@@ -14,30 +14,26 @@
      <div class="col-3 song-list">
 
 <!--Genre Dropdown-->
-       <form method="get" onchange="this.submit()">
-          <label for="genreSelect">Genre</label>
-           <select id="genreSelect" name="genre" class="form-select form-select-sm mb-2">
-           {% for g in genres %}
-            <option value="{{ g }}" {% if g == genre %}selected{% endif %}>{{ g }}</option>
-           {% endfor %}
-           </select>
-       </form>
+      <label for="genreSelect">Genre</label>
+<select id="genreSelect" class="form-select form-select-sm mb-2">
+  {% for g in genres %}
+    <option value="{{ g }}" {% if g == genre %}selected{% endif %}>{{ g }}</option>
+  {% endfor %}
+</select>
+
 
 <!-- available_songs_list -->
 <div id="asl">
   {% include 'available_song_list.html' %}
 </div>
-
-
-
-     </div><!--Close column1-->
+</div><!--Close column1-->
 
 <!-- Column 2: Video and Queue -->
      <div class="col-4 video-section">
 
 <!-- ##### VIDEO SCREEN #### -->
      <video id="player">
-        <source id="video-source" src="" type="video/mp4">
+        <source id="video-source" src="{{ url_for('static', filename=current_song['filename']) if current_song else '' }}" type="video/mp4">
            Your browser does not support the video tag.
       </video>
 
@@ -58,9 +54,9 @@
       </div>
 
 <!--    asljson     -->
-<pre class="text-muted small">
-  {{ songs | tojson(indent=2) }}
-</pre>
+<!--<pre class="text-muted small">-->
+<!--  {{ songs | tojson(indent=2) }}-->
+<!--</pre>-->
 
 </div> <!--Close column2-->
 
