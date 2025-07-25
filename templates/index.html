@@ -46,17 +46,14 @@
  <!-- #### PLAYER BUTTONS #### -->
       <div class="mt-2 text-center border-top pt-2" id="media_controls">
            <button class="btn btn-warning btn-sm" onclick="previousSong()">Previous</button>
-           <button class="btn btn-success btn-sm" onclick="playSong()">▶ Play</button>
+           <button class="btn btn-success btn-sm" onclick="togglePlayPause()" id="playPauseBtn">▶ Play</button>
            <button class="btn btn-success btn-sm" onclick="stopPlayback()">⏹ Stop</button>
            <button class="btn btn-warning btn-sm" onclick="restartSong()">🔁 Start Over</button>
            <button class="btn btn-warning btn-sm" onclick="nextSong()">Next</button>
            <button class="btn btn-secondary btn-sm mt-2" onclick="window.open('/debug', '_blank')">⚙️</button>
       </div>
 
-<!--    asljson     -->
-<!--<pre class="text-muted small">-->
-<!--  {{ songs | tojson(indent=2) }}-->
-<!--</pre>-->
+
 
 </div> <!--Close column2-->
 

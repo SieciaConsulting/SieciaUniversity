@@ -43,7 +43,7 @@
   width: 640px; /* Or your desired fixed width */
   height: 360px; /* Or your desired fixed height */
   object-fit: cover; /* This is key for content scaling */
-  display: block; /* Removes extra space below if any */
+  /*display: block;  Removes extra space below if any */
 }
 
   .video-section {

@@ -57,6 +57,62 @@ def home():
                            queue=queue,
                            current_song=songs[0] if songs else None)
 
+@app.route('/add_to_queue', methods=['POST'])
+def add_to_queue():
+    data = request.get_json()
+    logger.debug("add_to_queue > Body: %s", data)
+
+    song_id = str(data.get("id"))
+    genre = data.get("genre")
+
+    all_songs = get_all_songs()
+    song = next((s for s in all_songs if str(s.get('id')) == song_id), None)
+
+    if not song:
+        return jsonify({'error': 'Song not found'}), 404
+
+    filename = song['filename']
+
+    queue = session.get("queue", [])
+    if not any(s['filename'] == filename for s in queue):
+        queue.append(song)
+        session["queue"] = queue
+
+    # Set current_song only if it's not already set
+    current_song = session.get("current_song")
+    is_first_song = False
+    if not current_song:
+        session["current_song"] = song
+        current_song = song
+        is_first_song = True
+
+    # Build filtered list of available songs (excluding queue)
+    queued_filenames = {s['filename'] for s in queue}
+    available_songs = [
+        s for s in all_songs
+        if s['filename'] not in queued_filenames and (not genre or s.get('genre') == genre)
+    ]
+
+    queue_html = render_template('queue.html', queue=queue)
+    songs_html = render_template('available_song_list.html', songs=available_songs)
+
+    response = {
+        "queue_html": queue_html,
+        "songs_html": songs_html,
+        "queue_length": len(queue)
+    }
+
+    if is_first_song:
+        sheet_url = url_for('static', filename=current_song['filename'].replace(".mp4", ".png"))
+        response["current_song"] = {
+            "filename": current_song["filename"],
+            "sheet_url": sheet_url
+        }
+
+    return jsonify(response)
+
+
+
 def get_all_songs():
     db_path = os.path.join(os.path.dirname(__file__), "songs.db")
     excluded_dirs = {"Drone", "Extras"}
@@ -96,56 +152,6 @@ def get_all_songs():
     songs.sort(key=lambda x: x["title"].lower())
     log_session_state("get_all_songs() with inferred genres")
     return songs
-
-@app.route('/add_to_queue', methods=['POST'])
-def add_to_queue():
-    data = request.get_json()
-    print("py > add_to_queue > Body:", data)
-
-    song_id = str(data.get("id"))  # Ensure it's a string
-    genre = data.get("genre")
-
-    all_songs = get_all_songs()
-    song = next((s for s in all_songs if str(s.get('id')) == song_id), None)
-
-    if not song:
-        return jsonify({'error': 'Song not found'}), 404
-
-    filename = song['filename']
-
-    queue = session.get("queue", [])
-    if not any(s['filename'] == filename for s in queue):
-        queue.append(song)
-
-    session["queue"] = queue
-
-    if not session.get("current_song"):
-        session["current_song"] = song
-
-    # Remove queued songs from available songs
-    queued_filenames = {s['filename'] for s in queue}
-    available_songs = [
-        s for s in all_songs
-        if s['filename'] not in queued_filenames and (not genre or s.get('genre') == genre)
-    ]
-
-    queue_html = render_template('queue.html', queue=queue)
-    songs_html = render_template('available_song_list.html', songs=available_songs)
-
-    print(f"Selected genre: {genre}")
-    print(f"Queued filenames: {queue}")
-    # print(f"All songs: {[s['filename'] + ' | ' + str(s.get('genre')) for s in all_songs]}")
-    # print("Available songs after filtering:", available_songs)
-    print("Current Song:", session.get("current_song"))
-    return jsonify({
-    "queue_html": queue_html,
-    "songs_html": songs_html,
-    "queue_length": len(session["queue"]),
-    "current_song": {
-        "filename": song["filename"],
-        "sheet_url": url_for('static', filename=f'{song["filename"].replace(".mp4", ".png")}')
-    }
-})
 
 @app.route("/remove_from_queue", methods=["POST"])
 def remove_from_queue():
@@ -227,17 +233,48 @@ def clear_queue():
     log_session_state("clear_queue_call()")
     return ('', 204)
 
-@app.route('/next', methods=['POST'])
+@app.route('/next_song', methods=['POST'])
 def next_song():
-    if session["queue"]:
-        session["played"].append(session["queue"].pop(0))
-    next_song = session["queue"][0] if session["queue"] else None
+    queue = session.get("queue", [])
+    if not queue:
+        session["current_song"] = None
+        return jsonify({"current_song": None, "queue_html": render_template("queue.html", queue=[])})
+
+    # Remove first song
+    played_song = queue.pop(0)
+    session["queue"] = queue
+
+    # Set new current song
+    next_song = queue[0] if queue else None
+    session["current_song"] = next_song
+
+    response = {
+        "queue_html": render_template("queue.html", queue=queue),
+        "current_song": None
+    }
+
     if next_song:
-        video = url_for('static', filename=f"{session['genre']}/{next_song}")
-        sheet = url_for('static', filename=f"{session['genre']}/{next_song[:-4]}.png")
-        return jsonify(video=video, sheet=sheet)
-    log_session_state("next_song() call")
-    return jsonify(video="", sheet="")
+        sheet_url = url_for("static", filename=next_song['filename'].replace(".mp4", ".png"))
+        response["current_song"] = {
+            "filename": next_song["filename"],
+            "sheet_url": sheet_url
+        }
+
+    return jsonify(response)
+
+@app.route('/current_song')
+def current_song():
+    song = session.get("current_song")
+    if song:
+        sheet_url = url_for("static", filename=song["filename"].replace(".mp4", ".png"))
+        return jsonify({
+            "current_song": {
+                "filename": song["filename"],
+                "sheet_url": sheet_url
+            }
+        })
+    return jsonify({"current_song": None})
+
 
 @app.route('/previous', methods=['POST'])
 def previous_song():
@@ -309,7 +346,6 @@ def get_session_state():
         "current_song": current_song
     })
 
-
 def log_session_state(label="SESSION STATE", genre=None):
     logger.debug(f"\n--- {label} ---")
     #logger.debug(f"Available: {session.get('available_songs')}")
@@ -323,7 +359,6 @@ def log_session_state(label="SESSION STATE", genre=None):
 def session_dump():
     return jsonify({k: v for k, v in session.items()})
 
-
 @app.route('/debug')
 def debug_page():
     return render_template('debug.html', session_data=dict(session))
@@ -332,8 +367,6 @@ def debug_page():
 # def queue_html():
 #     queue = session.get('queue', [])
 #     return render_template("partials/queue.html", queue=queue)
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,19 +1,61 @@
 let player;
 
 document.addEventListener("DOMContentLoaded", function () {
-
-  player = document.getElementById("video-player");
+  player = document.getElementById("player");
   const genreSelect = document.getElementById("genreSelect");
+  console.log("DOM > ContentLoaded: ", genreSelect.value);
 
-  console.log("DOM > Genre: ", genreSelect);
-  // Setup the event listener for when the user changes the genre
+    // get current song, if there is one.
+  fetch("/current_song")
+  .then(res => res.json())
+  .then(data => {
+    if (data.current_song) {
+      setMedia(data.current_song.filename);
+      setSheet(data.current_song.sheet_url);
+      console.log("DOM > ContentLoaded > Current Song: ", data.current_song);
+    }
+  });
+
+  // User changes the genre
   genreSelect.addEventListener("change", () => {
     loadGenre(genreSelect.value);
     console.log("DOM > EventListener > genreSelectCHANGED > ", genreSelect.value);
   });
-
-  // Initial load (use default genre from template or current value)
   loadGenre(genreSelect.value);
+
+  // Song Ends
+  if (player) {
+    player.addEventListener("ended", () => {
+      console.log("Video has ended.");
+
+        // remove song from q
+        // add song to PlayedSong list
+        // set current_song=q[0] <-- new first song  in q
+        // SetMedia > video.load()
+        // SetSheet > sheetUrl
+        // // Read from db
+        // // player.DroneTrack.play({music_key}.mp4)
+        // // metronome.set({BPM})
+
+        fetch("/next_song", {
+        method: "POST"
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.current_song) {
+            setMedia(data.current_song.filename);
+            setSheet(data.current_song.sheet_url);
+        } else {
+            console.log("Queue is empty.");
+        }
+
+        // Always update the queue display
+        if (data.queue_html) {
+            document.getElementById("queue").innerHTML = data.queue_html;
+        }
+    })
+    .catch(err => console.error("Error advancing queue:", err));
+    })};
 });
 
 function loadGenre(selectedGenre) {
@@ -34,7 +76,6 @@ function loadGenre(selectedGenre) {
             console.error("Error loading genre:", err);
         });
 }
-
 
 window.addToQueue = function (button) {
     const songId = button.dataset.id;
@@ -60,70 +101,89 @@ console.log("addToQueue:", genre, title, artist, filename);
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
         return response.json();
     })
-    .then(data => {  // Something is off with this logic vvv
-        if (data.queue_html && data.songs_html) {
-            document.getElementById("queue").innerHTML = data.queue_html;
-            document.getElementById("asl").innerHTML = data.songs_html;
-        }
+    .then(data => {
+    if (data.queue_html && data.songs_html) {
+        document.getElementById("queue").innerHTML = data.queue_html;
+        document.getElementById("asl").innerHTML = data.songs_html;
+    }
 
-        if (data.current_song && data.queue_length === 1) {
-            setMedia(data.current_song.filename);
-            setSheet(data.current_song.sheet_url);
-        } else {
-            console.warn("No current_song returned from /add_to_queue");
-        }
-    })
+    if (data.current_song) {
+        console.log("Setting current song:", data.current_song.filename);
+        setMedia(data.current_song.filename);
+        setSheet(data.current_song.sheet_url);
+    } else {
+        console.warn("No current_song returned from /add_to_queue");
+    }
+})
+
     .catch(error => console.error("Error adding to queue:", error));
 };
 
-//player.onSongEnd(){
-// remove song from q
-// add song to PlayedSong list
-// set current_song=q[0] <-- new first song  in q
-// SetMedia > video.load()
-// SetSheet > sheetUrl
-// // Read from db
-// // player.DroneTrack.play({music_key}.mp4)
-// // metronome.set({BPM})
-// }
+window.togglePlayPause = function () {
+  const player = document.getElementById("player");
+  const source = document.getElementById("video-source");
+  const button = document.getElementById("playPauseBtn");
+
+  console.log("Attempting to play, player is:", player);
+
+  if (!player || !source) {
+    console.error("No video player or source element found.");
+    return;
+  }
+
+  const videoSrc = source.getAttribute("src");
+  console.log("Video source is:", videoSrc);
+
+  if (!videoSrc || videoSrc.trim() === "") {
+    console.warn("No video loaded yet.");
+    return;
+  }
+
+  if (!button) {
+    console.error("Play/pause button not found.");
+    return;
+  }
+
+  // Ensure browser recognizes new video source if it's dynamic
+  if (player.readyState < 2) {
+    console.warn("Player not ready. Reloading...");
+    player.load(); // Forces re-evaluation of <source>
+  }
+
+  if (player.paused || player.ended) {
+    player.play();
+    button.textContent = "⏸ Pause";
+  } else {
+    player.pause();
+    button.textContent = "▶ Play";
+  }
+};
 
 
 
+  window.stopPlayback = function () {
 
-  window.playSong = function () {
-    const player = document.getElementById("player");
+  const player = document.getElementById("player");
     if (!player) {
       console.error("playSong error: player element not found.");
       return;
     }
 
-    console.log("Calling play() on player", player.src);
-    player.play().catch(err => console.error("Error playing:", err));
-  };
-
-  window.togglePlayPause = function () {
-    if (player.paused) {
-      player.play();
-    } else {
-      player.pause();
-    }
-  };
-
-  window.stopPlayback = function () {
+    console.log("Calling stop() on player", player.src);
     player.pause();
     player.currentTime = 0;
   };
 
   window.restartSong = function () {
     player.currentTime = 0;
-    player.play();
+    player.play(); // <-- this one works.
   };
 
   window.clearQueue = function () {
     console.log("Clearing Queue");
     fetch("/clear_queue", { method: "POST" })
       .then(() => {
-        const queueList = document.getElementById("queue-list");
+        const queueList = document.getElementById("queue");
         if (queueList) queueList.innerHTML = '';
 
         const playedList = document.getElementById("played-list");
@@ -155,7 +215,7 @@ console.log("addToQueue:", genre, title, artist, filename);
     fetch("/queue-html")
       .then((res) => res.text())
       .then((html) => {
-        document.getElementById("queue-list").innerHTML = html;
+        document.getElementById("queue").innerHTML = html;
       });
   };
 
@@ -164,7 +224,7 @@ console.log("addToQueue:", genre, title, artist, filename);
       .then((response) => response.json())
       .then((data) => {
         if (data.video && data.sheet) {
-          const source = document.getElementById("video-source");
+          const source = document.getElementById("player");
           source.src = data.video;
           player.load();
           player.play();
@@ -178,7 +238,7 @@ console.log("addToQueue:", genre, title, artist, filename);
       .then((response) => response.json())
       .then((data) => {
         if (data.video && data.sheet) {
-          const source = document.getElementById("video-source");
+          const source = document.getElementById("player");
           source.src = data.video;
           player.load();
           player.play();
@@ -191,12 +251,12 @@ function setMedia(filename) {
     const video = document.getElementById("player");
     const source = document.getElementById("video-source");
 
+    if (!filename || !video || !source) return;
+
     const videoPath = `/static/${filename}`;
     source.src = videoPath;
-    video.load();  // Reload with new source
-    //video.play()
-    //    .then(() => console.log("Video playing:", filename))
-    //    .catch(err => console.error("Error playing video:", err));
+    video.load(); // Reloads new source
+    console.log("setMedia > ", filename, " loaded in video player.");
 }
 
 function setSheet(sheetUrl) {
