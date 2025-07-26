@@ -38,20 +38,33 @@
       </video>
 
 <!-- #### QUEUE #### -->
-      <div id="queue" class="p-2 bg-dark text-white">
-          {% include 'queue.html' %}
-      </div>
+<div id="queue" class="p-2 bg-dark text-white">
+  {% include 'queue.html' %}
+</div>
+
 
 
  <!-- #### PLAYER BUTTONS #### -->
-      <div class="mt-2 text-center border-top pt-2" id="media_controls">
+      <div class="mt-2 text-center" id="media_controls">
            <button class="btn btn-warning btn-sm" onclick="previousSong()">Previous</button>
            <button class="btn btn-success btn-sm" onclick="togglePlayPause()" id="playPauseBtn">▶ Play</button>
            <button class="btn btn-success btn-sm" onclick="stopPlayback()">⏹ Stop</button>
            <button class="btn btn-warning btn-sm" onclick="restartSong()">🔁 Start Over</button>
            <button class="btn btn-warning btn-sm" onclick="nextSong()">Next</button>
-           <button class="btn btn-secondary btn-sm mt-2" onclick="window.open('/debug', '_blank')">⚙️</button>
+          <label><input type="checkbox" id="autoplay-toggle"> Auto</label>
+          <button class="btn btn-danger mb-1" onclick="clearQueue()">🧹 C</button>
       </div>
+
+
+         <!--DEBUGGER-->
+   <div class="container mt-3 text-white">
+    {% for key, value in session_data.items() %}
+     <details class="mb-2">
+       <summary style="cursor:pointer; font-weight:bold;">{{ key }}</summary>
+       <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ value | tojson(indent=2) }}</pre>
+    </details>
+   {% endfor %}
+  </div> <!--DEBUGGER-->
 
 
 
@@ -68,6 +81,26 @@
 <script>
 // Needs to stay here for Python template rendering
 const songs = {{ songs|tojson|safe }};
+
+ function clearQueue() {
+      fetch('/clear_queue', { method: 'POST' })
+        .then(() => location.reload());
+    }
+
+      const autoplay = document.getElementById("autoplay-toggle").checked;
+
+if (data.was_empty && data.video && data.sheet) {
+  source.src = data.video;
+  player.load();
+  document.getElementById("sheet-display").src = data.sheet;
+
+  if (autoplay) {
+    player.play();
+  }
+}
+
+
+
 </script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

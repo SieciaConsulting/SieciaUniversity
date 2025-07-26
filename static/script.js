@@ -219,33 +219,75 @@ window.togglePlayPause = function () {
       });
   };
 
-  window.previousSong = function () {
-    fetch("/previous", { method: "POST" })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.video && data.sheet) {
-          const source = document.getElementById("player");
-          source.src = data.video;
-          player.load();
-          player.play();
-          document.getElementById("sheet-display").src = data.sheet;
-        }
-      });
-  };
 
-  window.nextSong = function () {
-    fetch("/next", { method: "POST" })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.video && data.sheet) {
-          const source = document.getElementById("player");
-          source.src = data.video;
-          player.load();
-          player.play();
-          document.getElementById("sheet-display").src = data.sheet;
-        }
-      });
-  };
+
+window.previousSong = function () {
+  fetch("/previous_song", { method: "POST" })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.song?.video) {
+        const player = document.getElementById("player");
+        player.src = data.song.video;
+        player.load();
+        player.play();
+      }
+
+      if (data.song?.sheet) {
+        document.getElementById("sheet-display").src = data.song.sheet;
+      }
+
+      // Update the queue UI
+      if (data.queue_html) {
+        document.getElementById("queue").innerHTML = data.queue_html;
+      }
+    })
+    .catch((error) => console.error("Previous song error:", error));
+};
+
+
+
+async function nextSong() {
+  console.log("nextSong called");
+
+  const response = await fetch("/next_song", { method: "POST" });
+  const data = await response.json();
+    console.log("api response: ", data)
+  if (!data || !data.song || !data.song.video) {
+    console.warn("No song returned from /next");
+    return;
+  }
+
+  const player = document.getElementById("player");
+  const sheet = document.getElementById("sheet");
+
+  const videoPath = "/static/" + data.song.video;
+  const sheetPath = "/static/" + data.song.image;
+
+  console.log("Updating player to:", videoPath);
+  console.log("Updating sheet to:", sheetPath);
+
+  // ✅ Cache-busting
+  const timestampedSrc = videoPath + "?t=" + new Date().getTime();
+  player.src = timestampedSrc;
+  player.load();
+
+
+  if (sheet) {
+    sheet.src = sheetPath;
+  } else {
+    console.warn("No #sheet element found.");
+  }
+
+  // ✅ Update queue UI
+  const queueDiv = document.getElementById("queue");
+  if (queueDiv && data.queue_html) {
+    queueDiv.innerHTML = data.queue_html;
+  }
+}
+
+
+
+
 
 function setMedia(filename) {
     const video = document.getElementById("player");

@@ -16,8 +16,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///songs.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MUSIC_ROOT = os.path.join("static")
 
-
-
 db.init_app(app)
 # Create tables once
 with app.app_context():
@@ -55,6 +53,7 @@ def home():
                            genres=genres,
                            songs=songs,
                            queue=queue,
+                           session_data = dict(session),
                            current_song=songs[0] if songs else None)
 
 @app.route('/add_to_queue', methods=['POST'])
@@ -110,8 +109,6 @@ def add_to_queue():
         }
 
     return jsonify(response)
-
-
 
 def get_all_songs():
     db_path = os.path.join(os.path.dirname(__file__), "songs.db")
@@ -170,6 +167,7 @@ def remove_from_queue():
 
 @app.route("/music/<genre>/<filename>")
 def serve_media(genre, filename):
+
     return send_from_directory(os.path.join(MUSIC_ROOT, genre), filename)
 
 @app.route('/get-next-song', methods=['POST'])
@@ -233,34 +231,71 @@ def clear_queue():
     log_session_state("clear_queue_call()")
     return ('', 204)
 
-@app.route('/next_song', methods=['POST'])
+@app.route("/next_song", methods=["POST"])
 def next_song():
     queue = session.get("queue", [])
-    if not queue:
-        session["current_song"] = None
-        return jsonify({"current_song": None, "queue_html": render_template("queue.html", queue=[])})
+    played = session.get("played", [])
+    current = session.get("current_song")
 
-    # Remove first song
-    played_song = queue.pop(0)
-    session["queue"] = queue
+    if queue:
+        if current:
+            played.append(current)
 
-    # Set new current song
-    next_song = queue[0] if queue else None
-    session["current_song"] = next_song
+        next_song_data = queue.pop(0)
+        session["current_song"] = next_song_data
+        session["queue"] = queue
+        session["played"] = played
 
-    response = {
-        "queue_html": render_template("queue.html", queue=queue),
-        "current_song": None
-    }
+        video_url = url_for("static", filename=next_song_data["filename"])
+        sheet_url = url_for("static", filename=next_song_data["filename"].replace(".mp4", ".png"))
 
-    if next_song:
-        sheet_url = url_for("static", filename=next_song['filename'].replace(".mp4", ".png"))
-        response["current_song"] = {
-            "filename": next_song["filename"],
-            "sheet_url": sheet_url
+        return jsonify({
+            "current_song": {
+                "title": next_song_data["title"],
+                "artist": next_song_data["artist"],
+                "filename": next_song_data["filename"],
+                "sheet_url": sheet_url,
+            },
+            "queue_html": render_template("queue.html")
+        })
+
+    return jsonify({"current_song": None, "queue_html": ""})
+
+
+
+@app.route('/previous_song', methods=['POST'])
+def previous_song():
+    queue = session.get("queue", [])
+    played = session.get("played", [])
+    current = session.get("current_song")
+
+    if played:
+        # Step 1: Pop the previous song from played
+        previous = played.pop()
+
+        # Step 2: Insert current song back into queue if not already present
+        if current and not any(song["filename"] == current["filename"] for song in queue):
+            queue.insert(0, current)
+
+        # Step 3: Set previous as new current
+        session["current_song"] = previous
+        session["queue"] = queue
+        session["played"] = played
+
+        response = {
+            "queue_html": render_template("queue.html", queue=queue),
+            "song": {
+                "video": url_for("static", filename=previous["filename"]),
+                "sheet": url_for("static", filename=previous["filename"].replace(".mp4", ".png")),
+            }
         }
 
-    return jsonify(response)
+        return jsonify(response)
+
+    return jsonify({"song": {"video": "", "sheet": ""}})
+
+
+
 
 @app.route('/current_song')
 def current_song():
@@ -275,17 +310,6 @@ def current_song():
         })
     return jsonify({"current_song": None})
 
-
-@app.route('/previous', methods=['POST'])
-def previous_song():
-    if session["played"]:
-        previous = session["played"].pop()
-        session["queue"].insert(0, previous)
-        video = url_for('static', filename=f"{session['genre']}/{previous}")
-        sheet = url_for('static', filename=f"{session['genre']}/{previous[:-4]}.png")
-        return jsonify(video=video, sheet=sheet)
-    return jsonify(video="", sheet="")
-
 @app.route("/log_played", methods=["POST"])
 def log_played():
     data = request.json
@@ -297,9 +321,11 @@ def log_played():
         return jsonify({"status": "success"})
     return jsonify({"status": "error"}), 400
 
-@app.route('/show-queue')
+@app.route('/queue-html')
 def show_queue():
-    return jsonify(session.get('queue', []))
+    queue = session.get('queue', [])
+    return render_template('queue.html', queue=queue)
+
 
 @app.route('/played')
 def show_played():

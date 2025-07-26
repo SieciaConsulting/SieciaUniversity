@@ -102,3 +102,35 @@
     margin-top: 10px;
     font-weight: bold;
   }
+
+.list-group-item {
+  border: none !important; /* Remove all borders */
+  margin: 0 !important;    /* Eliminate spacing between items */
+  padding: 3px 5px;
+  background-color: transparent;
+  cursor: pointer;
+  font-family: monospace;
+  color: #ccc;
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+#queue {
+  height: 170px;
+  overflow-y: auto;
+  background: transparent;
+  padding: 0;
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
+}
+
+
+#queue .list-group-item {
+  background-color: transparent;
+  color: #ccc;
+  border-bottom: 1px solid #333;
+}

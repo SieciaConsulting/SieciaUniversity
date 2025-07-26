@@ -1,21 +1,19 @@
 {% if songs %}
   <ul class="list-group">
     {% for song in songs %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
+      <li class="list-group-item"
+          onclick="addToQueue(this)"
+          data-filename="{{ song.filename }}"
+          data-id="{{ song.id }}"
+          data-title="{{ song.title }}"
+          data-artist="{{ song.artist }}"
+          data-genre="{{ song.genre }}">
         {{ song.title }} - {{ song.artist }}
-        <button class="btn btn-sm btn-primary" onclick="addToQueue(this)"
-        data-filename="{{ song.filename }}"
-        data-id="{{ song.id }}"
-        data-title="{{ song.title }}"
-        data-artist="{{ song.artist }}"
-        data-genre="{{ song.genre }}"
-        >
-          Add
-        </button>
       </li>
     {% endfor %}
   </ul>
 {% else %}
   <div class="alert alert-secondary">No songs available.</div>
 {% endif %}
+
 
