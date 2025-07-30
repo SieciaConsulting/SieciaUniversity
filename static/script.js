@@ -27,22 +27,13 @@ document.addEventListener("DOMContentLoaded", function () {
   if (player) {
     player.addEventListener("ended", () => {
       console.log("Video has ended.");
-
-        // remove song from q
-        // add song to PlayedSong list
-        // set current_song=q[0] <-- new first song  in q
-        // SetMedia > video.load()
-        // SetSheet > sheetUrl
-        // // Read from db
-        // // player.DroneTrack.play({music_key}.mp4)
-        // // metronome.set({BPM})
-
         fetch("/next_song", {
         method: "POST"
     })
     .then(res => res.json())
     .then(data => {
         if (data.current_song) {
+
             setMedia(data.current_song.filename);
             setSheet(data.current_song.sheet_url);
         } else {
@@ -107,12 +98,17 @@ console.log("addToQueue:", genre, title, artist, filename);
         document.getElementById("asl").innerHTML = data.songs_html;
     }
 
+   x = data;
+   console.log(x);
+   //debugger;
+
+
     if (data.current_song) {
         console.log("Setting current song:", data.current_song.filename);
         setMedia(data.current_song.filename);
         setSheet(data.current_song.sheet_url);
     } else {
-        console.warn("No current_song returned from /add_to_queue");
+       // console.warn("No current_song returned from /add_to_queue");
     }
 })
 
@@ -248,29 +244,30 @@ window.previousSong = function () {
 
 async function nextSong() {
   console.log("nextSong called");
-
   const response = await fetch("/next_song", { method: "POST" });
+
   const data = await response.json();
+//   debugger;
     console.log("api response: ", data)
-  if (!data || !data.song || !data.song.video) {
+  if (!data || !data.current_song) {
     console.warn("No song returned from /next");
+
     return;
   }
 
   const player = document.getElementById("player");
-  const sheet = document.getElementById("sheet");
+  const sheet = document.getElementById("sheet-display");
 
-  const videoPath = "/static/" + data.song.video;
-  const sheetPath = "/static/" + data.song.image;
+ const videoPath = "/static/" + data.current_song.filename;
+ const sheetPath = data.current_song.sheet_url;
 
-  console.log("Updating player to:", videoPath);
-  console.log("Updating sheet to:", sheetPath);
+ console.log("Updating player to:", videoPath);
+ console.log("Updating sheet to:", sheetPath);
 
-  // ✅ Cache-busting
+  // KEEP! Cache-busting.
   const timestampedSrc = videoPath + "?t=" + new Date().getTime();
   player.src = timestampedSrc;
   player.load();
-
 
   if (sheet) {
     sheet.src = sheetPath;
@@ -281,23 +278,26 @@ async function nextSong() {
   // ✅ Update queue UI
   const queueDiv = document.getElementById("queue");
   if (queueDiv && data.queue_html) {
+    console.log("Updating Queue: " + data.queue_html)
     queueDiv.innerHTML = data.queue_html;
   }
 }
 
-
-
-
-
 function setMedia(filename) {
     const video = document.getElementById("player");
     const source = document.getElementById("video-source");
+    const autoplayToggle = document.getElementById("autoplay-toggle");
 
     if (!filename || !video || !source) return;
 
     const videoPath = `/static/${filename}`;
     source.src = videoPath;
-    video.load(); // Reloads new source
+    video.load();
+
+   if (autoplayToggle && autoplayToggle.checked) {
+        video.play();
+    }
+
     console.log("setMedia > ", filename, " loaded in video player.");
 }
 

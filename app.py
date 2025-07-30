@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from flask import Flask, render_template, request, session, jsonify, send_from_directory, request, url_for
 from models import db
 from db import init_db, scan_and_populate
@@ -24,7 +26,7 @@ with app.app_context():
 @app.route("/")
 def home():
     genre = request.args.get("genre", "Chill")
-    exclude = {"Drone", "Extra"}
+    exclude = {"Drone", "Extras"}
     genres = [d for d in os.listdir(MUSIC_ROOT)
               if os.path.isdir(os.path.join(MUSIC_ROOT, d)) and d not in exclude]
 
@@ -56,59 +58,92 @@ def home():
                            session_data = dict(session),
                            current_song=songs[0] if songs else None)
 
+# 👇
 @app.route('/add_to_queue', methods=['POST'])
 def add_to_queue():
-    data = request.get_json()
-    logger.debug("add_to_queue > Body: %s", data)
+    current_song = session.get("current_song")
 
+    # Parse incoming JSON from the POST request
+    data = request.get_json()
+    logger.debug("add_to_queue > Incoming request body: %s", data)
+
+    # Extract song ID and genre from the request
     song_id = str(data.get("id"))
     genre = data.get("genre")
+    logger.debug("add_to_queue > Song ID: %s | Genre filter: %s", song_id, genre)
 
+    # Get the full list of songs from your source (DB, file, etc.)
     all_songs = get_all_songs()
-    song = next((s for s in all_songs if str(s.get('id')) == song_id), None)
+    logger.debug("add_to_queue > Total available songs: %d", len(all_songs))
 
+    # Find the song in all_songs that matches the given song_id
+    song = next((s for s in all_songs if str(s.get('id')) == song_id), None)
     if not song:
+        logger.warning("add_to_queue > Song not found for ID: %s", song_id)
         return jsonify({'error': 'Song not found'}), 404
 
     filename = song['filename']
+    logger.debug("add_to_queue > Matched song filename: %s", filename)
 
+    # Retrieve the existing queue from the session (or empty list if not set)
     queue = session.get("queue", [])
+    logger.debug("add_to_queue > Current queue length before adding: %d", len(queue))
+
+    # Only add to the queue if it's not already in there (based on filename)
     if not any(s['filename'] == filename for s in queue):
         queue.append(song)
         session["queue"] = queue
+        logger.debug("add_to_queue > Added song to queue: %s", filename)
+    else:
+        logger.debug("add_to_queue > Song already in queue: %s", filename)
 
-    # Set current_song only if it's not already set
-    current_song = session.get("current_song")
+    # Check if current_song is set; if not, assign the new song as current
+
     is_first_song = False
     if not current_song:
         session["current_song"] = song
         current_song = song
         is_first_song = True
+        logger.debug("add_to_queue > Set new current song: %s", filename)
+    else:
+        logger.debug("add_to_queue > Current song already set: %s", current_song.get('filename'))
 
-    # Build filtered list of available songs (excluding queue)
+    # Filter available songs to exclude any that are already in the queue
+    # Also apply genre filter if provided
     queued_filenames = {s['filename'] for s in queue}
+
+
     available_songs = [
         s for s in all_songs
         if s['filename'] not in queued_filenames and (not genre or s.get('genre') == genre)
     ]
+    #logger.debug("add_to_queue > Filtered available songs count: %d", len(available_songs))
 
+    # Render updated queue and available songs list as HTML
     queue_html = render_template('queue.html', queue=queue)
     songs_html = render_template('available_song_list.html', songs=available_songs)
 
+    # Build the response object
     response = {
         "queue_html": queue_html,
         "songs_html": songs_html,
         "queue_length": len(queue)
     }
 
+    # If this is the first song added, also return sheet info so the UI can display it
     if is_first_song:
         sheet_url = url_for('static', filename=current_song['filename'].replace(".mp4", ".png"))
         response["current_song"] = {
             "filename": current_song["filename"],
             "sheet_url": sheet_url
         }
+        logger.debug("add_to_queue > Returning current_song in response for UI preload: %s", current_song["filename"])
+    else:
+        logger.debug("add_to_queue > No new current_song returned since one already exists.")
 
+    logger.debug("add_to_queue > Final response payload keys: %s", list(response.keys()))
     return jsonify(response)
+
 
 def get_all_songs():
     db_path = os.path.join(os.path.dirname(__file__), "songs.db")
@@ -231,35 +266,67 @@ def clear_queue():
     log_session_state("clear_queue_call()")
     return ('', 204)
 
+# Called from js on 'endSong' listener.
 @app.route("/next_song", methods=["POST"])
 def next_song():
+    session.modified = True
     queue = session.get("queue", [])
     played = session.get("played", [])
     current = session.get("current_song")
 
+    print(f"next_song start - queue: {queue}")
+    print(f"next_song start - played: {played}")
+    print(f"next_song start - current_song: {current}")
+
     if queue:
-        if current:
-            played.append(current)
+        # Step 1: Pop the song that was just playing (the "current")
+        current = queue.pop(0)
+        played.append(current)
 
-        next_song_data = queue.pop(0)
-        session["current_song"] = next_song_data
-        session["queue"] = queue
-        session["played"] = played
+        # Step 2: If there’s another song in the queue, it's the next one
+        next_song_data = queue[0] if queue else None
+    else:
+        next_song_data = None
 
+    # Step 3: Update the session state
+    session["queue"] = queue
+    session["played"] = played
+    session["current_song"] = next_song_data  # ✅ Correct: actual song dict
+
+
+    print(f"next_song updated - new current: {next_song_data}")
+    print(f"next_song updated - remaining queue: {queue}")
+    print(f"next_song updated - played: {played}")
+
+    if next_song_data:
         video_url = url_for("static", filename=next_song_data["filename"])
         sheet_url = url_for("static", filename=next_song_data["filename"].replace(".mp4", ".png"))
 
-        return jsonify({
-            "current_song": {
-                "title": next_song_data["title"],
-                "artist": next_song_data["artist"],
-                "filename": next_song_data["filename"],
-                "sheet_url": sheet_url,
-            },
-            "queue_html": render_template("queue.html")
-        })
+        current_song_info = {
+            "title": next_song_data["title"],
+            "artist": next_song_data["artist"],
+            "filename": next_song_data["filename"],
+            "sheet_url": sheet_url,
+        }
+    else:
+        current_song_info = None
 
-    return jsonify({"current_song": None, "queue_html": ""})
+    # Be careful: render_template may depend on session["queue"], which was just updated
+    # queue_html = render_template("queue.html")
+
+    updated_queue = session.get('queue', [])
+    queue_html = render_template('queue.html', queue=updated_queue)
+
+
+    response_data = {
+        "current_song": current_song_info,
+        "queue_html": queue_html
+    }
+
+    print("DEBUG: Response data to return:")
+    pprint(response_data)
+
+    return jsonify(response_data)
 
 
 
@@ -294,9 +361,6 @@ def previous_song():
 
     return jsonify({"song": {"video": "", "sheet": ""}})
 
-
-
-
 @app.route('/current_song')
 def current_song():
     song = session.get("current_song")
@@ -325,7 +389,6 @@ def log_played():
 def show_queue():
     queue = session.get('queue', [])
     return render_template('queue.html', queue=queue)
-
 
 @app.route('/played')
 def show_played():
