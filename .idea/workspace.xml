@@ -4,21 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b403a977-3c2d-4d88-9500-9c0ae15a08c5" name="Changes" comment="init">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="b403a977-3c2d-4d88-9500-9c0ae15a08c5" name="Changes" comment="Previous and Next still broken">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/songs.db" beforeDir="false" afterPath="$PROJECT_DIR$/songs.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/script.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 1
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="307F1pRcnuhHARgeqaA7bXBLK4J" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -30,11 +40,11 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.app.executor": "Run",
+    "Python.app.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "videoplayer",
     "settings.editor.selected.configurable": "editor.preferences.appearance"
   }
 }]]></component>
@@ -42,6 +52,7 @@
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/static" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/static/Extras" />
       <recent name="$PROJECT_DIR$/templates" />
     </key>
   </component>
@@ -68,11 +79,121 @@
       <option name="project" value="LOCAL" />
       <updated>1753063100491</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Working layout">
+      <option name="closed" value="true" />
+      <created>1753122789702</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1753122789702</updated>
+    </task>
+    <task id="LOCAL-00003" summary="working">
+      <option name="closed" value="true" />
+      <created>1753129884863</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1753129884863</updated>
+    </task>
+    <task id="LOCAL-00004" summary="workinggit">
+      <option name="closed" value="true" />
+      <created>1753154245770</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1753154245770</updated>
+    </task>
+    <task id="LOCAL-00005" summary="close">
+      <option name="closed" value="true" />
+      <created>1753244526427</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1753244526428</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Clicking a song pulls up correct video and sheet. Q broken.">
+      <option name="closed" value="true" />
+      <created>1753301602550</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1753301602550</updated>
+    </task>
+    <task id="LOCAL-00007" summary="puter restart">
+      <option name="closed" value="true" />
+      <created>1753313354171</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1753313354171</updated>
+    </task>
+    <task id="LOCAL-00008" summary="safety save">
+      <option name="closed" value="true" />
+      <created>1753330194643</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1753330194643</updated>
+    </task>
+    <task id="LOCAL-00009" summary="working lists, sheets and it plays">
+      <option name="closed" value="true" />
+      <created>1753402102414</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1753402102414</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Working everything. Mission Accomplished. V1.0">
+      <option name="closed" value="true" />
+      <created>1753414170210</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1753414170210</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Adding script and style pages.">
+      <option name="closed" value="true" />
+      <created>1753414860440</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1753414860440</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Previous and Next still broken">
+      <option name="closed" value="true" />
+      <created>1753502382091</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1753502382091</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
-    <option name="LAST_COMMIT_MESSAGE" value="init" />
+    <MESSAGE value="Working layout" />
+    <MESSAGE value="working" />
+    <MESSAGE value="workinggit" />
+    <MESSAGE value="close" />
+    <MESSAGE value="Clicking a song pulls up correct video and sheet. Q broken." />
+    <MESSAGE value="puter restart" />
+    <MESSAGE value="safety save" />
+    <MESSAGE value="working lists, sheets and it plays" />
+    <MESSAGE value="Working everything. Mission Accomplished. V1.0" />
+    <MESSAGE value="Adding script and style pages." />
+    <MESSAGE value="Previous and Next still broken" />
+    <option name="LAST_COMMIT_MESSAGE" value="Previous and Next still broken" />
   </component>
 </project>

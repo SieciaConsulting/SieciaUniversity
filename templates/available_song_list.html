@@ -1,0 +1,19 @@
+{% if songs %}
+  <ul class="list-group">
+    {% for song in songs %}
+      <li class="list-group-item"
+          onclick="addToQueue(this)"
+          data-filename="{{ song.filename }}"
+          data-id="{{ song.id }}"
+          data-title="{{ song.title }}"
+          data-artist="{{ song.artist }}"
+          data-genre="{{ song.genre }}">
+        {{ song.title }} - {{ song.artist }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="alert alert-secondary">No songs available.</div>
+{% endif %}
+
+

@@ -1,0 +1,9 @@
+<ul class="list-group">
+  {% for song in queue %}
+    <li class="list-group-item">
+      {{ song.title }} - {{ song.artist }}
+    </li>
+  {% else %}
+    <li class="list-group-item text-muted">Queue is empty</li>
+  {% endfor %}
+</ul>
